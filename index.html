@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Food Keepers Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a single lab-bench column; station tabs across the top, each station = explain → real foods → activity → label detective → field notes. */
+:root{
+  --paper:#EEF3F0; --surface:#FFFFFF; --sunk:#E3EBE6; --ink:#15302A; --muted:#566A63; --line:#CFDAD4;
+  --brine:#0D7766; --brine-ink:#FFFFFF; --brine-soft:#D5ECE5;
+  --tomato:#C9391F; --tomato-soft:#FBE3DD; --amber:#B87800; --amber-soft:#FBEFD2; --ice:#2A66A8; --ice-soft:#DCE8F5;
+  --good:#1F7A3A; --good-soft:#DDF0E2;
+  --label-bg:#FFFFFF; --label-ink:#111111;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",Verdana,system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1916; --surface:#15231F; --sunk:#1B2C27; --ink:#E4EEEA; --muted:#9BB0A8; --line:#2A3C36;
+  --brine:#3CC0A6; --brine-ink:#06231D; --brine-soft:#163A33;
+  --tomato:#FF7158; --tomato-soft:#3A1E18; --amber:#F2B93B; --amber-soft:#3A2E12; --ice:#79B0EE; --ice-soft:#16283C;
+  --good:#5FD07F; --good-soft:#163222;
+  --label-bg:#F6F6F2; --label-ink:#111111; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#0E1916; --surface:#15231F; --sunk:#1B2C27; --ink:#E4EEEA; --muted:#9BB0A8; --line:#2A3C36;
+  --brine:#3CC0A6; --brine-ink:#06231D; --brine-soft:#163A33;
+  --tomato:#FF7158; --tomato-soft:#3A1E18; --amber:#F2B93B; --amber-soft:#3A2E12; --ice:#79B0EE; --ice-soft:#16283C;
+  --good:#5FD07F; --good-soft:#163222;
+  --label-bg:#F6F6F2; --label-ink:#111111; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:920px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);line-height:1.12;text-wrap:balance;margin:0}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--brine);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{padding-block:28px 18px;display:grid;gap:14px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brine);font-weight:700}
+header.top h1{font-size:clamp(34px,6vw,58px);font-weight:800;letter-spacing:-.02em}
+.hook{font-size:19px;max-width:62ch;color:var(--muted)}
+.hook b{color:var(--ink)}
+.idrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.idrow label{font-weight:700;font-size:15px}
+.idrow input{font:inherit;font-size:16px;padding:8px 12px;border:2px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-width:0;width:220px;max-width:100%}
+.progress{margin-left:auto;font-size:14px;color:var(--muted)}
+.progress b{color:var(--ink)}
+
+/* tabs */
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:8px;border-bottom:2px solid var(--line);overflow-x:auto;scrollbar-width:thin}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.tabrow{display:flex;gap:6px;width:max-content}
+.tab{display:flex;align-items:center;gap:8px;border:2px solid transparent;background:transparent;border-radius:999px;padding:7px 14px 7px 8px;font-weight:700;font-size:15px;white-space:nowrap;color:var(--muted)}
+.tab .n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sunk);font-family:var(--f-mono);font-size:13px;color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--surface);border-color:var(--brine);color:var(--ink)}
+.tab[aria-selected="true"] .n{background:var(--brine);color:var(--brine-ink)}
+.tab.done .n{box-shadow:0 0 0 2px var(--good)}
+.tab:hover{color:var(--ink)}
+
+/* station */
+section.station{padding-top:26px;display:grid;gap:26px}
+.st-head{display:grid;gap:8px}
+.st-head h2{font-size:clamp(28px,4.4vw,40px);font-weight:800;letter-spacing:-.015em}
+.lede{font-size:18.5px;max-width:64ch}
+.explain{display:grid;gap:12px;max-width:68ch}
+.explain p b{background:var(--brine-soft);padding:0 3px;border-radius:3px}
+.say{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.block{display:grid;gap:12px}
+.block>h3{font-size:22px;font-weight:700}
+.block>.sub{color:var(--muted);font-size:15.5px;margin-top:-6px}
+
+.words{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.word{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.word dt{font-family:var(--f-display);font-weight:700;font-size:17px}
+.word dd{margin:2px 0 0;font-size:15.5px;color:var(--muted)}
+
+.foods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.food{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:4px;align-content:start}
+.food .fn{font-weight:700}
+.food .fm{font-size:15px;color:var(--muted)}
+.tag{justify-self:start;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--brine-soft);color:var(--ink)}
+
+.callout{border-left:5px solid var(--tomato);background:var(--tomato-soft);padding:12px 16px;border-radius:0 var(--r) var(--r) 0;font-size:16px;max-width:68ch}
+.callout.cool{border-color:var(--ice);background:var(--ice-soft)}
+
+/* activity shell */
+.activity{background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:18px;display:grid;gap:14px}
+.activity .ah{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.activity .ah h3{font-size:22px}
+.score{font-family:var(--f-mono);font-size:14px;color:var(--muted)}
+.score b{color:var(--ink)}
+
+/* sort cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:10px;background:var(--paper);align-content:start}
+.card .q{font-weight:700}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{border:2px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 11px;font-size:15px;font-weight:700}
+.opt:hover:not(:disabled){border-color:var(--brine)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--tomato);background:var(--tomato-soft)}
+.fb{font-size:15px}
+.fb.ok b{color:var(--good)}
+.fb.no b{color:var(--tomato)}
+
+/* pH */
+.phwrap{display:grid;gap:8px}
+.phbar{position:relative;height:46px;border-radius:8px;background:linear-gradient(90deg,#D7263D 0%,#F46036 18%,#F2C14E 34%,#9BC53D 46%,#2E933C 52%,#1B998B 64%,#2364AA 80%,#5B2A86 100%);margin-top:30px}
+.phline{position:absolute;top:-28px;bottom:-6px;width:0;border-left:3px dashed var(--ink)}
+.phline span{position:absolute;top:0;left:6px;white-space:nowrap;font-family:var(--f-mono);font-size:12px;font-weight:700}
+.phmark{position:absolute;top:50%;width:22px;height:22px;margin-left:-11px;margin-top:-11px;border-radius:50%;background:#fff;border:4px solid #111;transition:left .5s ease}
+.phticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.phends{display:flex;justify-content:space-between;font-size:14px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;font-size:15px;font-weight:700}
+.chip[aria-pressed="true"]{border-color:var(--brine);background:var(--brine-soft)}
+.chip.solved::after{content:" ✓";color:var(--good)}
+.predict{display:grid;gap:10px;background:var(--paper);border-radius:var(--r);padding:14px;border:1px solid var(--line)}
+.predict .pq{font-weight:700;font-size:18px}
+
+/* gauges */
+.gauge{position:relative;height:30px;border-radius:8px;background:var(--sunk);overflow:visible;margin-top:44px}
+.gfill{position:absolute;inset:0 auto 0 0;border-radius:8px;background:var(--brine);transition:width .3s}
+.gmark{position:absolute;top:-40px;bottom:-4px;border-left:2px solid var(--ink)}
+.gmark span{position:absolute;top:0;left:4px;font-size:12px;white-space:nowrap;font-family:var(--f-mono);line-height:1.2}
+.gmark.l span{left:auto;right:4px;text-align:right}
+.gscale{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--brine);height:28px}
+.readout{display:flex;flex-wrap:wrap;gap:10px}
+.big{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;display:grid;min-width:0}
+.big .k{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.big .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:700}
+.status{display:grid;gap:6px}
+.st{display:flex;gap:10px;align-items:center;font-size:15.5px}
+.pill{font-family:var(--f-mono);font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.can{background:var(--tomato-soft);color:var(--tomato)}
+.pill.cant{background:var(--good-soft);color:var(--good)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:2px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 12px;font-weight:700;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--brine);background:var(--brine-soft)}
+.awtable{width:100%;border-collapse:collapse;font-size:15px}
+.awtable td{padding:6px 8px;border-bottom:1px solid var(--line)}
+.awtable td:last-child{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* temperature */
+.tbar{position:relative;height:38px;border-radius:8px;display:flex;overflow:hidden;margin-top:6px}
+.tbar div{height:100%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;text-align:center;line-height:1.1;padding:0 2px}
+.tpos{position:relative;height:16px}
+.tpos i{position:absolute;top:0;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:14px solid var(--ink);margin-left:-9px;transition:left .2s}
+.zone{border-radius:var(--r);padding:12px 14px;font-size:16px}
+.dots{display:flex;flex-wrap:wrap;gap:3px;min-height:20px;max-width:100%}
+.dots span{width:9px;height:9px;border-radius:50%;background:var(--tomato)}
+.order{display:grid;gap:8px}
+.order button{text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:8px;padding:9px 12px;font-weight:700;display:flex;gap:10px;align-items:center}
+.order button .on{font-family:var(--f-mono);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sunk);flex:none}
+.order button.placed{border-color:var(--good);background:var(--good-soft);cursor:default}
+.order button.placed .on{background:var(--good);color:#fff}
+.order button.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* altitude */
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.mountain{height:90px;position:relative;border-radius:var(--r);background:var(--sunk);overflow:hidden}
+.mountain svg{position:absolute;inset:0;width:100%;height:100%}
+.calc{display:grid;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.calc label{font-weight:700}
+.calc .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.calc input{font:inherit;font-family:var(--f-mono);width:110px;padding:6px 10px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn{border:2px solid var(--brine);background:var(--brine);color:var(--brine-ink);border-radius:8px;padding:7px 14px;font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* food label (deliberately paper-white in both themes: it's a real package) */
+.labelgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.foodlabel{background:var(--label-bg);color:var(--label-ink);border:3px solid var(--label-ink);padding:12px 14px;font-family:Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.35;max-width:380px;width:100%;justify-self:center;box-shadow:6px 6px 0 var(--line)}
+.foodlabel .pn{font-weight:900;font-size:22px;letter-spacing:-.01em;border-bottom:8px solid var(--label-ink);padding-bottom:4px;margin-bottom:6px;font-family:Arial Black,Helvetica,Arial,sans-serif}
+.foodlabel .pw{font-size:13px;margin-bottom:6px}
+.foodlabel .ln{border-top:1px solid var(--label-ink);padding:5px 0}
+.foodlabel .ln.thick{border-top-width:4px}
+.foodlabel .k{font-weight:700}
+.clue{background:#FFF3B0;border:0;border-bottom:2px dashed #8A6D00;padding:0 2px;font:inherit;color:#111;text-align:left;cursor:pointer}
+.clue.found{background:#C9EFD6;border-bottom-color:#1F7A3A}
+.cluebox{display:grid;gap:8px;align-content:start}
+.cluenote{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:15.5px;min-height:96px}
+.cluenote b{display:block;margin-bottom:4px}
+
+/* notebook */
+.notebook{background:var(--surface);border:2px solid var(--brine);border-radius:14px;padding:18px;display:grid;gap:12px}
+.notebook h3{font-size:22px}
+.notebook .why{font-size:15px;color:var(--muted)}
+.starters{display:flex;flex-wrap:wrap;gap:6px}
+.starter{border:1px dashed var(--brine);background:var(--brine-soft);border-radius:999px;padding:4px 12px;font-size:14.5px}
+.notebook textarea{font:inherit;font-size:17px;line-height:28px;width:100%;min-height:200px;resize:vertical;padding:4px 12px;border:1px solid var(--line);border-radius:8px;color:var(--ink);
+  background-color:var(--surface);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--line) 27px,var(--line) 28px);background-attachment:local;background-position:0 3px}
+.nbfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted)}
+.nextbtn{justify-self:end}
+
+/* slides builder */
+.slidesgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.slide{aspect-ratio:16/9;max-width:100%;border-radius:6px;overflow:hidden;border:1px solid var(--line);display:flex;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#16302A;font-size:7px;line-height:1.3}
+.slide .lp{width:28%;padding:6px;color:#fff;display:grid;align-content:start;gap:3px}
+.slide .lp .sn{font-size:6px;opacity:.85;text-transform:uppercase;letter-spacing:.05em}
+.slide .lp .stt{font-size:10px;font-weight:700;line-height:1.1}
+.slide .rp{flex:1;padding:7px;display:grid;grid-template-rows:auto 1fr auto;gap:4px;min-width:0}
+.slide .rp .nh{font-weight:700;font-size:8px}
+.slide .rp .nt{overflow:hidden;white-space:pre-wrap;word-break:break-word}
+.slide .rp .bi{padding:4px;border-radius:3px;font-size:6.5px}
+.slide.title{flex-direction:column;justify-content:center;padding:12px;color:#fff;gap:4px}
+.slide.title .t1{font-size:15px;font-weight:700}
+.slide.empty .nt{color:#B33;font-style:italic}
+.themes{display:flex;flex-wrap:wrap;gap:8px}
+.sw{display:flex;gap:8px;align-items:center;border:2px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--paper);font-weight:700;font-size:15px}
+.sw i{width:18px;height:18px;border-radius:4px;display:block}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.tips{display:grid;gap:8px}
+.tips input,.form input{font:inherit;width:100%;padding:8px 12px;border:2px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.form label,.tips label{font-weight:700;font-size:15px;display:grid;gap:4px}
+.check{display:flex;gap:8px;align-items:center;font-size:15.5px}
+.check input{width:20px;height:20px;accent-color:var(--brine)}
+.missing{font-size:15px}
+.export{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.export .btn{font-size:18px;padding:12px 22px}
+.msg{font-size:15.5px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:14px;color:var(--muted);max-width:70ch}
+
+@media (max-width:640px){
+  .labelgrid{grid-template-columns:minmax(0,1fr)}
+  body{font-size:16px}
+  .progress{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Science · Year 5–6 · Food preservation</div>
+  <h1>Food Keepers Lab</h1>
+  <p class="hook">Why can a jar of jam sit in the cupboard for a year, but milk goes sour in a few days? Work through the six stations, take notes as you go, and at the end turn your notes into your own <b>PowerPoint summary</b>.</p>
+  <div class="idrow">
+    <label for="sname">My name</label>
+    <input id="sname" type="text" autocomplete="off" placeholder="Type your name">
+    <span class="progress" id="progress">Notes taken: <b>0 of 6</b> stations</span>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Stations"><div class="tabrow" role="tablist" id="tabrow"></div></nav>
+
+<main id="stations"></main>
+
+<footer>
+  Safety note: canning, pressure cookers and boiling water are jobs for adults. Never taste food from a can or jar that is bulging, leaking, cracked or smells odd. The numbers here (pH, water activity, temperatures) are typical values used by food scientists; real foods can vary a little.<br>
+  Your notes are saved in this browser on this device only.
+</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script>
+"use strict";
+/* ---------- storage ---------- */
+const KEY="foodkeepers-v1";
+let S={name:"",cls:"",notes:{},tips:["","",""],theme:0,bigidea:true};
+try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},300);}
+
+const $=(s,r=document)=>r.querySelector(s);
+const el=(tag,attrs={},...kids)=>{const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="class")n.className=v;else if(k==="html")n.innerHTML=v;else if(k==="text")n.textContent=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else n.setAttribute(k,v);}for(const c of kids){if(c!=null)n.append(c);}return n;};
+
+/* ---------- content ---------- */
+const STATIONS=[
+{id:"enemies",short:"Three enemies",title:"The three enemies of food",
+ lede:"Food doesn't just 'go off' by magic. Three things are always working to spoil it. Preserving food means stopping them, or slowing them right down.",
+ explain:[
+  "<b>Microbes</b> are living things too small to see: bacteria, yeasts and moulds. They love food that is <b>warm, wet and not sour</b>. They eat it, multiply, and leave waste behind that makes food smell, taste bad or even make us ill.",
+  "The most dangerous one is called <i>Clostridium botulinum</i> <span class='say'>(say it: clos-TRID-ee-um bot-yoo-LIE-num)</span>. It makes a poison that attacks nerves. It grows where there is <b>no oxygen</b>, like inside a sealed jar or can that wasn't made properly.",
+  "<b>Enzymes</b> are tiny helpers already inside fruit, vegetables and meat. They make a banana ripen, but they keep going and make it go brown and mushy. They are why a sliced apple turns brown.",
+  "<b>Oxidation</b> happens when oxygen in the air reacts with food. It makes fats and oils taste stale (we call this <b>rancid</b>) and it destroys vitamins and bright colours."],
+ words:[["Microbe","A living thing too small to see without a microscope."],["Mould","A fuzzy microbe that grows on bread, fruit and cheese."],["Enzyme","A natural helper inside food that speeds up ripening and rotting."],["Oxidation","A change caused when oxygen in the air reacts with food."],["Rancid","When fats and oils taste and smell stale or 'off'."],["Spoilage","When food becomes unpleasant or unsafe to eat."]],
+ foods:[["Bread","Gets fuzzy mould spots after a few days","Microbes"],["Apple slices","Turn brown in minutes once cut","Enzymes"],["Bananas","Ripen from green to yellow to brown","Enzymes"],["Crisps","Taste stale once the bag is open","Oxidation"],["Cooking oil","Smells bad if left in sunlight","Oxidation"],["Milk","Turns sour if left out of the fridge","Microbes"]],
+ label:{name:"Sea Salt Crisps",wt:"Net weight 150 g",rows:[
+   {k:"Ingredients:",v:"Potatoes, sunflower oil, sea salt, ",clue:"antioxidant (rosemary extract)",why:["Antioxidant = anti-oxidation","Rosemary extract slows down oxygen reacting with the oil, so the crisps don't turn rancid as quickly."]},
+   {clue:"Packaged in a protective atmosphere.",why:["Fighting oxygen","The air in the bag has been swapped for nitrogen gas. No oxygen means much less oxidation. That's why the bag is puffy!"]},
+   {clue:"Store in a cool, dry place.",why:["Fighting microbes","Microbes need water and warmth. Keeping crisps dry also keeps them crunchy."]},
+   {k:"Best before:",clue:"14 FEB 2027",why:["Best before vs Use by","'Best before' is about quality: after this date crisps may taste stale but aren't usually unsafe. 'Use by' dates (on milk, meat) are about safety."]},
+   {clue:"Once opened, eat within 2 days.",why:["Why so quick?","Once the bag is open, oxygen gets back in and oxidation starts again."]}]},
+ starters:["The three enemies of food are…","Microbes like food that is…","Enzymes make food…","Oxidation happens when…","On a crisp packet, I spotted…"],
+ bigidea:"Food is spoiled by three enemies: microbes (bacteria, yeasts, moulds), enzymes and oxidation. Preserving food means stopping or slowing all three."},
+
+{id:"acid",short:"Acid & pH",title:"Acidity and the pH scale",
+ lede:"How sour a food is decides how it must be preserved. Scientists measure sourness with the pH scale.",
+ explain:[
+  "The <b>pH scale</b> goes from 0 to 14. Low numbers are <b>acidic</b> (sour, like lemon juice). 7 is <b>neutral</b> (like pure water). High numbers are <b>alkaline</b> (like soap).",
+  "The magic number in food safety is <b>pH 4.6</b>. The dangerous botulinum germ cannot grow in food that is more acidic than that.",
+  "<b>High-acid foods (pH below 4.6)</b> include most fruits, jams, pickles and tomatoes. They can be safely sealed in jars using a <b>water-bath canner</b>: a big pot of boiling water at 100°C (212°F).",
+  "<b>Low-acid foods (pH 4.6 or higher)</b> include meat, fish, chicken, milk and most vegetables that aren't pickled. Botulinum spores can survive boiling water in these foods, so they need a <b>pressure canner</b>, which gets hotter: 115°C (240°F)."],
+ words:[["Acid","A sour substance. Lemon juice and vinegar are acids."],["pH","A number from 0 to 14 showing how acidic or alkaline something is."],["Spore","A tough, sleeping form of a bacterium that can survive heat."],["Canning","Sealing food in jars or cans and heating it so it keeps."],["Water-bath canner","A pot of boiling water (100°C) for high-acid foods."],["Pressure canner","A sealed pot that reaches 115°C, for low-acid foods."]],
+ foods:[["Pickled cucumbers","Vinegar makes them very acidic","High acid"],["Strawberry jam","Fruit acid plus sugar","High acid"],["Canned tomatoes","Close to the line, so lemon juice is often added","High acid"],["Canned tuna","Low acid, so cooked in a pressure canner","Low acid"],["Canned chickpeas","Low acid, pressure processed","Low acid"],["Lemon curd","Lemon makes it acidic","High acid"]],
+ label:{name:"Crunchy Dill Pickles",wt:"Drained weight 360 g",rows:[
+   {k:"Ingredients:",v:"Cucumbers, water, ",clue:"vinegar (acetic acid)",why:["Making it sour on purpose","Vinegar is an acid. It pushes the pH well below 4.6 so botulinum can't grow."]},
+   {v:"salt, dill, garlic, mustard seeds.",k:""},
+   {clue:"Heat treated in the jar.",why:["Water-bath canning","Because pickles are high-acid, boiling the sealed jars at 100°C is enough to make them safe."]},
+   {k:"Acidity:",clue:"pH 3.3",why:["Reading the number","3.3 is lower than 4.6, so this is a high-acid food."]},
+   {clue:"Once opened, keep refrigerated.",why:["Why the fridge?","Once the seal is broken, new microbes can get in. The cold slows them down."]}]},
+ starters:["The pH scale measures…","The magic number is pH 4.6 because…","A high-acid food is…","Low-acid foods need a pressure canner because…","Vinegar helps preserve food by…"],
+ bigidea:"pH 4.6 is the safety line. High-acid foods (below 4.6) can go in a 100°C water bath. Low-acid foods (4.6 or above) need a 115°C pressure canner to kill botulinum spores."},
+
+{id:"water",short:"Water activity",title:"Water activity: dry it or lock it up",
+ lede:"Microbes need water to grow. Take the water away, or lock it up, and they can't multiply.",
+ explain:[
+  "Scientists measure how much <b>free water</b> a food has on a scale from 0 to 1.0. This is called <b>water activity</b>, written <span class='mono'>a<sub>w</sub></span>. Fresh meat is about 0.99. Crackers are about 0.25.",
+  "Most harmful bacteria need a water activity <b>above 0.91</b> to grow. Moulds are tougher: some can grow down to about 0.80.",
+  "<b>Drying (dehydration)</b> pulls water out using warm air. Grapes become raisins; meat becomes jerky.",
+  "<b>Salt and sugar</b> grab onto water and hold it tight, so microbes can't use it. That's why lots of sugar keeps jam, and lots of salt keeps salted fish."],
+ words:[["Water activity (aw)","How much free water is in a food, from 0 (none) to 1.0."],["Dehydration","Drying food by removing water with heat and moving air."],["Curing","Preserving meat or fish with lots of salt."],["Bound water","Water held tightly by salt or sugar so microbes can't use it."],["Free water","Water that microbes can use to grow."]],
+ foods:[["Raisins","Dried grapes","Dried"],["Dates","Naturally low in water and high in sugar","Sugar"],["Beef jerky","Dried, salted meat","Dried + salt"],["Salted fish","Packed in salt to draw water out","Salt"],["Honey","So much sugar that microbes can't grow","Sugar"],["Strawberry jam","Sugar locks up the water","Sugar"]],
+ label:{name:"Strawberry Jam",wt:"Net weight 340 g",rows:[
+   {k:"Ingredients:",v:"Sugar, strawberries, gelling agent (pectin), ",clue:"acidity regulator (citric acid)",why:["Two tricks in one","Citric acid keeps the jam high-acid (low pH), which helps keep it safe too."]},
+   {clue:"Prepared with 50 g fruit per 100 g.",why:["Half fruit…","…and much of the rest is sugar."]},
+   {clue:"Total sugar content 60 g per 100 g.",why:["Sugar locks up water","All that sugar binds the water, bringing water activity down to about 0.80–0.85. Most bacteria can't grow."]},
+   {clue:"Once opened, keep refrigerated and eat within 6 weeks.",why:["Why does jam still go mouldy?","Moulds can grow down to about 0.80 water activity. Jam is close to that line, so once opened, moulds can slowly grow. The fridge slows them down."]}]},
+ starters:["Water activity means…","Most bacteria need water activity above…","Salt and sugar preserve food by…","Drying works because…","My favourite dried food is…"],
+ bigidea:"Microbes need free water. Drying removes it; salt and sugar lock it up. Most harmful bacteria can't grow below a water activity of 0.91."},
+
+{id:"temperature",short:"Danger zone",title:"The temperature danger zone",
+ lede:"Bacteria multiply fastest at 'just right' temperatures, the same temperatures we like!",
+ explain:[
+  "The <b>danger zone</b> is between <b>4°C and 60°C</b> (40°F to 140°F). In this zone, bacteria can double in number as often as every 20 minutes.",
+  "<b>Fridges</b> keep food below 4°C. This <b>slows</b> bacteria down a lot.",
+  "<b>Freezers</b> keep food at −18°C (0°F) or colder. This <b>stops</b> bacteria growing, but it does <b>not kill</b> them. They are only paused, like pressing a pause button. When the food thaws, they can start again.",
+  "<b>Blanching</b> means dipping vegetables in boiling water for a couple of minutes, then into ice water, before freezing. This switches off the enzymes, so frozen peas stay green and sweet instead of dull and tough."],
+ words:[["Danger zone","4°C to 60°C, where bacteria multiply fastest."],["Refrigerate","Keep food cold, below 4°C, to slow microbes."],["Freeze","Keep food at −18°C or colder to pause microbes."],["Thaw","Let frozen food warm up and melt."],["Blanch","Boil vegetables briefly, then cool them in ice water, to stop enzymes."]],
+ foods:[["Frozen peas","Blanched, then frozen at −18°C","Freezer"],["Milk","Kept in the fridge below 4°C","Fridge"],["Ice cream","Must stay frozen","Freezer"],["Chicken","Fridge, and cooked until piping hot","Fridge"],["Lunchbox yoghurt","Use an ice pack in hot weather","Fridge"],["Leftover rice","Cool quickly and refrigerate","Fridge"]],
+ label:{name:"Garden Peas",wt:"Frozen · 900 g",rows:[
+   {clue:"Blanched and frozen within 2½ hours of picking.",why:["Blanching","A quick boil switches off the enzymes, so the peas keep their colour, sweetness and vitamins."]},
+   {k:"Storage:",clue:"Store at −18°C or colder.",why:["Freezer temperature","At −18°C microbes stop growing. They aren't dead though, just paused."]},
+   {clue:"Do not refreeze once thawed.",why:["Why not?","While food thaws, paused bacteria wake up and start multiplying. Freezing again just pauses a bigger crowd."]},
+   {clue:"Cook from frozen until piping hot.",why:["Heat kills","Cooking well above 60°C kills the bacteria that freezing only paused."]}]},
+ starters:["The danger zone is between…","Freezing does not kill bacteria because…","A fridge keeps food below…","Blanching means…","At home, I could…"],
+ bigidea:"Bacteria multiply fastest between 4°C and 60°C. Fridges (below 4°C) slow them; freezers (−18°C) pause them but don't kill them. Blanching stops enzymes before freezing."},
+
+{id:"altitude",short:"Altitude",title:"Altitude: why mountains change cooking",
+ lede:"Water doesn't always boil at 100°C. On a mountain, it boils at a lower temperature, and that matters for safe canning.",
+ explain:[
+  "At sea level, like here in Dubai, water boils at <b>100°C (212°F)</b>.",
+  "The higher you go, the less air is pressing down on the water, so it boils more easily, at a <b>lower temperature</b>.",
+  "A useful rule: the boiling point drops by about <b>1°F for every 500 feet</b> you climb.",
+  "If you live <b>1,000 feet or more</b> above sea level, you must <b>boil jars for longer</b> (water-bath canning) or <b>turn up the pressure</b> (pressure canning), so the food still gets hot enough to be safe."],
+ words:[["Altitude","How high a place is above sea level."],["Sea level","The height of the sea, used as 0 for measuring altitude."],["Boiling point","The temperature at which a liquid boils."],["Air pressure","How hard the air above us presses down."],["Processing time","How long jars must stay in the boiling water or pressure canner."]],
+ foods:[["Jam in Dubai","Sea level: water boils at 100°C","Sea level"],["Jam on Jebel Jais","About 1,934 m high: needs longer boiling","High"],["Pasta in Mexico City","Takes longer to cook at 2,240 m","High"],["Tea in the Himalayas","Water boils well below 100°C","Very high"]],
+ label:{name:"Recipe Card: Apricot Jam",wt:"Water-bath canning · makes 5 jars",rows:[
+   {k:"Step 6:",v:"Fill hot jars, leaving 6 mm space at the top. Wipe rims and seal."},
+   {k:"Step 7:",clue:"Process in a boiling water bath.",why:["Why a water bath?","Apricot jam is high-acid (pH below 4.6), so 100°C boiling water is enough."]},
+   {k:"Altitude chart:",clue:"0–1,000 ft: 10 min · 1,001–3,000 ft: 15 min · 3,001–6,000 ft: 20 min · over 6,000 ft: 25 min",why:["Longer boiling up high","Higher up, water boils at a lower temperature, so jars need more time to get the food safe."]},
+   {clue:"Check seals after 24 hours.",why:["The seal matters","A sealed lid keeps new microbes out. If a lid pops up and down, refrigerate that jar and eat it soon."]}]},
+ starters:["At sea level, water boils at…","On a mountain, water boils at a lower temperature because…","The boiling point drops about 1°F for every…","If you live high up, you need to…","I worked out that…"],
+ bigidea:"Water boils at lower temperatures at higher altitudes (about 1°F lower per 500 ft). Above 1,000 ft, canning needs longer boiling times or higher pressure."},
+
+{id:"clean",short:"Clean vs sterile",title:"Sanitise or sterilise?",
+ lede:"Clean is good. Sterile is extreme. Both matter when preserving food, but they are not the same thing.",
+ explain:[
+  "<b>Sanitising</b> means reducing germs to a <b>safe level</b>. We do this with soap, water and cleaning sprays on hands, worktops and spoons. Some germs are left, but not enough to harm us.",
+  "<b>Sterilising</b> means destroying <b>all</b> living microbes, including tough spores. This needs extreme heat, like boiling jars or pressure canning.",
+  "When you seal food in a jar, there is no air flow and the food may sit for months. Anything left alive inside has lots of time to grow. That's why canning needs sterilising, not just sanitising."],
+ words:[["Sanitise","Reduce germs to a safe level, using soap, water or sanitiser."],["Sterilise","Destroy all microbes, usually with very high heat."],["Pathogen","A germ that can make people ill."],["Contaminate","To let germs get onto or into food."]],
+ foods:[["Canned soup","Sterilised in the can at the factory","Sterilised"],["Jars for jam","Boiled before filling","Sterilised"],["Your hands","Washed with soap for 20 seconds","Sanitised"],["Chopping board","Hot soapy water after raw meat","Sanitised"],["UHT milk","Heated to about 135°C, so it keeps without a fridge until opened","Sterilised"]],
+ label:{name:"Tomato Soup",wt:"Canned · 400 g",rows:[
+   {clue:"Sterilised.",why:["Sterilised in the can","The sealed cans are heated in giant pressure cookers until every microbe and spore inside is destroyed."]},
+   {k:"Storage:",clue:"Store in a cool, dry place.",why:["No fridge needed (yet)","Because it's sterile and sealed, nothing inside can grow, so it keeps for months."]},
+   {clue:"Once opened, transfer to a non-metal container, refrigerate and use within 2 days.",why:["After opening","The moment the can is opened, new microbes get in. Now it needs the fridge like any fresh food."]},
+   {clue:"Do not use if the can is bulging or damaged.",why:["A warning sign","A bulging can may mean microbes are growing and making gas inside, possibly botulinum. Never taste it."]}]},
+ starters:["Sanitising means…","Sterilising means…","An example of sanitising is…","Canning needs sterilising because…","A warning sign on a can is…"],
+ bigidea:"Sanitising reduces germs to a safe level (soap, water, sprays). Sterilising destroys all microbes and spores (extreme heat), which is needed for sealed jars and cans."}
+];
+
+/* ---------- tabs ---------- */
+const tabrow=$("#tabrow"),main=$("#stations");
+const ALL=[...STATIONS.map((s,i)=>({id:s.id,n:i+1,short:s.short})),{id:"slides",n:"7",short:"Make my slides"}];
+ALL.forEach(t=>{tabrow.append(el("button",{class:"tab",role:"tab",id:"tab-"+t.id,"aria-controls":"st-"+t.id,"aria-selected":"false",onclick:()=>show(t.id)},el("span",{class:"n",text:String(t.n)}),t.short));});
+
+function show(id,scroll=true){
+  ALL.forEach(t=>{const sel=t.id===id;$("#tab-"+t.id).setAttribute("aria-selected",sel);$("#st-"+t.id).hidden=!sel;});
+  if(id==="slides")renderSlides();
+  try{history.replaceState(null,"","#"+id);}catch(e){}
+  const tb=$("#tab-"+id);tb.scrollIntoView({block:"nearest",inline:"center"});
+  if(scroll){const top=$("nav.tabs").getBoundingClientRect().top+window.scrollY;if(window.scrollY>top)window.scrollTo({top:top,behavior:"smooth"});}
+}
+function refreshProgress(){
+  let n=0;STATIONS.forEach(s=>{const has=(S.notes[s.id]||"").trim().length>0;if(has)n++;$("#tab-"+s.id).classList.toggle("done",has);});
+  $("#progress").innerHTML="Notes taken: <b>"+n+" of 6</b> stations";
+}
+
+/* ---------- generic station builder ---------- */
+function buildStation(s,i){
+  const sec=el("section",{class:"station",id:"st-"+s.id,role:"tabpanel","aria-labelledby":"tab-"+s.id,hidden:""});
+  sec.append(el("div",{class:"st-head"},el("div",{class:"eyebrow",text:"Station "+(i+1)+" of 6"}),el("h2",{text:s.title}),el("p",{class:"lede",text:s.lede})));
+  const ex=el("div",{class:"explain"});s.explain.forEach(p=>ex.append(el("p",{html:p})));sec.append(ex);
+  // words
+  const dl=el("dl",{class:"words"});s.words.forEach(([w,d])=>dl.append(el("div",{class:"word"},el("dt",{text:w}),el("dd",{text:d}))));
+  sec.append(el("div",{class:"block"},el("h3",{text:"Key words"}),dl));
+  // foods
+  const fg=el("div",{class:"foods"});s.foods.forEach(([n,m,t])=>fg.append(el("div",{class:"food"},el("span",{class:"tag",text:t}),el("span",{class:"fn",text:n}),el("span",{class:"fm",text:m}))));
+  sec.append(el("div",{class:"block"},el("h3",{text:"Real foods"}),fg));
+  // activity slot
+  sec.append(el("div",{id:"act-"+s.id}));
+  // label
+  sec.append(buildLabel(s));
+  // notebook
+  sec.append(buildNotebook(s,i));
+  return sec;
+}
+
+function buildLabel(s){
+  const L=s.label,box=el("div",{class:"block"});
+  const total=L.rows.filter(r=>r.clue).length;let found=new Set();
+  const counter=el("span",{class:"score",html:"Clues found: <b>0 of "+total+"</b>"});
+  box.append(el("div",{class:"ah",style:"display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline"},el("h3",{text:"Label detective"}),counter));
+  box.append(el("p",{class:"sub",text:"Real packaging is full of preservation clues. Tap each highlighted clue to find out what it means."}));
+  const lab=el("div",{class:"foodlabel"},el("div",{class:"pn",text:L.name}),el("div",{class:"pw",text:L.wt}));
+  const note=el("div",{class:"cluenote",html:"<b>Tap a clue on the label</b>Each yellow phrase is a clue about how this food is kept safe."});
+  L.rows.forEach((r,ri)=>{
+    const ln=el("div",{class:"ln"+(ri===0?" thick":"")});
+    if(r.k)ln.append(el("span",{class:"k",text:r.k+" "}));
+    if(r.v)ln.append(document.createTextNode(r.v));
+    if(r.clue){const b=el("button",{class:"clue",type:"button",text:r.clue});
+      b.addEventListener("click",()=>{found.add(ri);b.classList.add("found");note.innerHTML="";note.append(el("b",{text:r.why[0]}),document.createTextNode(r.why[1]));counter.innerHTML="Clues found: <b>"+found.size+" of "+total+"</b>";});
+      ln.append(b);}
+    lab.append(ln);
+  });
+  box.append(el("div",{class:"labelgrid"},lab,el("div",{class:"cluebox"},note)));
+  return box;
+}
+
+function buildNotebook(s,i){
+  const nb=el("div",{class:"notebook"});
+  nb.append(el("h3",{text:"My field notes: "+s.short}));
+  nb.append(el("p",{class:"why",text:"Write the important ideas in your own words. These notes become slide "+(i+2)+" of your PowerPoint. Tap a sentence starter if you're stuck."}));
+  const ta=el("textarea",{id:"notes-"+s.id,"aria-label":"My notes for "+s.short,placeholder:"Write your notes here…"});
+  ta.value=S.notes[s.id]||"";
+  const cnt=el("span");
+  const upd=()=>{S.notes[s.id]=ta.value;save();refreshProgress();const w=ta.value.trim()?ta.value.trim().split(/\s+/).length:0;cnt.textContent=w+" words";};
+  ta.addEventListener("input",upd);
+  const st=el("div",{class:"starters"});
+  s.starters.forEach(t=>st.append(el("button",{class:"starter",type:"button",text:t,onclick:()=>{const v=ta.value;ta.value=v+(v&&!v.endsWith("\n")?"\n":"")+t+" ";ta.focus();ta.selectionStart=ta.selectionEnd=ta.value.length;upd();}})));
+  nb.append(st,ta,el("div",{class:"nbfoot"},cnt,el("span",{text:"Saved automatically"})));
+  const nextId=i<5?STATIONS[i+1].id:"slides";
+  nb.append(el("button",{class:"btn nextbtn",type:"button",text:i<5?"Next: "+STATIONS[i+1].short+" →":"Make my slides →",onclick:()=>show(nextId)}));
+  upd();
+  return nb;
+}
+
+STATIONS.forEach((s,i)=>main.append(buildStation(s,i)));
+
+/* ---------- activity helpers ---------- */
+function shell(id,title,sub){const a=el("div",{class:"activity"});const sc=el("span",{class:"score"});a.append(el("div",{class:"ah"},el("h3",{text:title}),sc));if(sub)a.append(el("p",{class:"sub",style:"color:var(--muted);font-size:15.5px",text:sub}));$("#act-"+id).append(a);return{a,sc};}
+function sortGame(id,title,sub,choices,items){
+  const{a,sc}=shell(id,title,sub);let right=0,done=0;
+  const setScore=()=>sc.innerHTML="Score: <b>"+right+"</b> / "+items.length;setScore();
+  const g=el("div",{class:"cards"});
+  items.forEach(it=>{
+    const fb=el("p",{class:"fb"});const opts=el("div",{class:"opts"});
+    choices.forEach(c=>{const b=el("button",{class:"opt",type:"button",text:c});
+      b.addEventListener("click",()=>{const ok=c===it.a;opts.querySelectorAll("button").forEach(x=>{x.disabled=true;if(x.textContent===it.a)x.classList.add("right");});if(!ok)b.classList.add("wrong");
+        fb.className="fb "+(ok?"ok":"no");fb.innerHTML="";fb.append(el("b",{text:ok?"Correct! ":"Not quite. It's "+it.a.toLowerCase()+". "}),document.createTextNode(it.why));if(ok)right++;done++;setScore();});
+      opts.append(b);});
+    g.append(el("div",{class:"card"},el("p",{class:"q",text:it.q}),opts,fb));
+  });
+  a.append(g);
+}
+
+/* Station 1: culprit */
+sortGame("enemies","Who's the culprit?","Read each food problem. Which enemy caused it?",["Microbes","Enzymes","Oxidation"],[
+ {q:"Fluffy green and white spots appear on a loaf of bread.",a:"Microbes",why:"That fuzz is mould, a type of microbe, growing on the damp bread."},
+ {q:"A sliced apple turns brown in ten minutes.",a:"Enzymes",why:"Cutting the apple lets its enzymes meet oxygen, which makes brown colours. A squeeze of lemon juice slows it down."},
+ {q:"A green banana turns yellow, then spotty brown, on the counter.",a:"Enzymes",why:"The banana's own enzymes ripen it, then keep going until it goes brown and soft."},
+ {q:"Milk left in a hot car smells sour.",a:"Microbes",why:"Bacteria multiplied in the warm milk and made acids that turn it sour."},
+ {q:"An open bag of crisps tastes stale and smells a bit like old crayons.",a:"Oxidation",why:"Oxygen reacted with the oil in the crisps and made it rancid."},
+ {q:"Cooking oil stored on a sunny windowsill starts to smell bad.",a:"Oxidation",why:"Light and oxygen break down fats. Oil should be kept in a cool, dark cupboard."},
+ {q:"Frozen beans that weren't blanched turn dull and tough.",a:"Enzymes",why:"Freezing slows enzymes but doesn't stop them. Blanching first would have switched them off."},
+ {q:"A can of beans is bulging at the top.",a:"Microbes",why:"Microbes growing inside make gas. It could be botulinum. Never open or taste it!"}]);
+
+/* Station 2: pH meter */
+(function(){
+  const id="acid";const{a,sc}=shell(id,"The pH tester","Pick a food. Predict how it should be canned, then test it on the pH scale.");
+  const foods=[["Lemon juice",2.2],["Dill pickles",3.3],["Strawberry jam",3.3],["Apples",3.4],["Tomatoes",4.4],["Carrots",5.2],["Green beans",5.6],["Tuna",6.0],["Chicken",6.2],["Milk",6.7]];
+  let solved=new Set(),right=0;const setScore=()=>sc.innerHTML="Tested: <b>"+solved.size+"</b> / "+foods.length+" · Correct: <b>"+right+"</b>";setScore();
+  const bar=el("div",{class:"phbar"}),mark=el("div",{class:"phmark",style:"left:50%",hidden:""});
+  bar.append(el("div",{class:"phline",style:"left:"+(4.6/14*100)+"%"},el("span",{text:"pH 4.6 safety line"})),mark);
+  const ticks=el("div",{class:"phticks"});for(let n=0;n<=14;n+=2)ticks.append(el("span",{text:String(n)}));
+  a.append(el("div",{class:"phwrap"},bar,ticks,el("div",{class:"phends"},el("span",{text:"← more acidic (sour)"}),el("span",{text:"neutral 7"}),el("span",{text:"more alkaline →"}))));
+  const chips=el("div",{class:"chips"});const pr=el("div",{class:"predict"});
+  pr.append(el("p",{class:"pq",text:"Choose a food to test."}));
+  foods.forEach(([n,ph])=>{const c=el("button",{class:"chip",type:"button","aria-pressed":"false",text:n});c.addEventListener("click",()=>pick(n,ph,c));chips.append(c);});
+  a.append(chips,pr);
+  function pick(n,ph,chip){
+    chips.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===chip));
+    mark.hidden=true;pr.innerHTML="";
+    pr.append(el("p",{class:"pq",text:"Predict: how should "+n.toLowerCase()+" be canned?"}));
+    const o=el("div",{class:"opts"}),fb=el("p",{class:"fb"});
+    ["Water-bath canner (100°C)","Pressure canner (115°C)"].forEach((t,k)=>{const b=el("button",{class:"opt",type:"button",text:t});
+      b.addEventListener("click",()=>{const correct=ph<4.6?0:1;const ok=k===correct;o.querySelectorAll("button").forEach((x,j)=>{x.disabled=true;if(j===correct)x.classList.add("right");});if(!ok)b.classList.add("wrong");
+        mark.hidden=false;requestAnimationFrame(()=>mark.style.left=(ph/14*100)+"%");
+        if(!solved.has(n)){solved.add(n);if(ok)right++;}chip.classList.add("solved");setScore();
+        fb.className="fb "+(ok?"ok":"no");fb.innerHTML="";
+        let msg=n+" has a pH of about "+ph+". "+(ph<4.6?"That's below 4.6, so it's high-acid. Botulinum can't grow, and a boiling water bath is enough.":"That's 4.6 or higher, so it's low-acid. Botulinum spores could survive boiling, so it needs the hotter pressure canner.");
+        if(n==="Tomatoes")msg+=" Tomatoes are only just below the line, so recipes add a little lemon juice to be extra safe.";
+        fb.append(el("b",{text:ok?"Great prediction! ":"Not this time. "}),document.createTextNode(msg));});
+      o.append(b);});
+    pr.append(o,fb);
+  }
+})();
+
+/* Station 3: water activity */
+(function(){
+  const id="water";const{a}=shell(id,"The drying rack","Choose a method, then slide to process the food. Watch the water activity fall.");
+  const modes=[
+    {k:"Dry it",from:"Fresh grapes",to:"Raisins",start:0.98,end:0.60,unit:"hours in the dryer",max:48},
+    {k:"Add sugar",from:"Strawberries",to:"Strawberry jam",start:0.97,end:0.82,unit:"% of the sugar added",max:100},
+    {k:"Add salt",from:"Fresh fish",to:"Salted fish",start:0.99,end:0.75,unit:"days packed in salt",max:14}];
+  let m=0;const seg=el("div",{class:"seg"});
+  modes.forEach((md,i)=>seg.append(el("button",{type:"button","aria-pressed":String(i===0),text:md.k,onclick:e=>{m=i;seg.querySelectorAll("button").forEach((b,j)=>b.setAttribute("aria-pressed",j===i));rng.value=0;upd();}})));
+  const rng=el("input",{type:"range",min:"0",max:"100",value:"0",id:"aw-range","aria-label":"Process amount"});
+  const gauge=el("div",{class:"gauge"}),fill=el("div",{class:"gfill"});gauge.append(fill);
+  [[0.80,"moulds"],[0.88,"yeasts"],[0.91,"bacteria"]].forEach(([v,t])=>gauge.append(el("div",{class:"gmark"+(v===0.91?"":" l"),style:"left:"+(v*100)+"%"},el("span",{html:t+"<br>"+v.toFixed(2)}))));
+  const sc=el("div",{class:"gscale"},el("span",{text:"0 (bone dry)"}),el("span",{text:"0.5"}),el("span",{text:"1.0 (pure water)"}));
+  const vFood=el("span",{class:"v",style:"font-family:var(--f-body);font-size:20px"}),vAw=el("span",{class:"v"}),vStep=el("span",{class:"v"});
+  const kStep=el("span",{class:"k"});
+  const readout=el("div",{class:"readout"},el("div",{class:"big"},el("span",{class:"k",text:"Food"}),vFood),el("div",{class:"big"},el("span",{class:"k",text:"Water activity"}),vAw),el("div",{class:"big"},kStep,vStep));
+  const status=el("div",{class:"status"});
+  a.append(seg,readout,gauge,sc,el("label",{for:"aw-range",style:"font-weight:700",text:"Slide to process the food"}),rng,status);
+  function upd(){const md=modes[m];const p=rng.value/100;const aw=md.start-(md.start-md.end)*p;
+    vAw.textContent=aw.toFixed(2);fill.style.width=(aw*100)+"%";
+    vFood.textContent=p<0.05?md.from:(p>0.95?md.to:"Becoming "+md.to.toLowerCase());
+    kStep.textContent=md.unit;vStep.textContent=String(Math.round(p*md.max));
+    status.innerHTML="";
+    [["Harmful bacteria",0.91],["Yeasts",0.88],["Moulds",0.80]].forEach(([n,t])=>{const can=aw>t;status.append(el("div",{class:"st"},el("span",{class:"pill "+(can?"can":"cant"),text:can?"CAN GROW":"STOPPED"}),el("span",{text:n+" need more than "+t.toFixed(2)})));});
+  }
+  rng.addEventListener("input",upd);upd();
+  const tb=el("table",{class:"awtable"});const tbody=el("tbody");
+  [["Fresh meat or fish",0.99],["Fresh grapes",0.98],["Bread",0.95],["Strawberry jam",0.82],["Beef jerky",0.75],["Raisins",0.60],["Honey",0.58],["Crackers",0.25]].forEach(([n,v])=>tbody.append(el("tr",{},el("td",{text:n}),el("td",{text:v.toFixed(2)}))));
+  tb.append(tbody);
+  a.append(el("div",{class:"block"},el("h3",{style:"font-size:18px",text:"Typical water activity of real foods"}),el("div",{style:"overflow-x:auto"},tb)));
+})();
+
+/* Station 4: thermometer + blanching */
+(function(){
+  const id="temperature";const{a}=shell(id,"The 4-hour test","Set the temperature. Start with 10 bacteria on a piece of chicken. How many after 4 hours?");
+  const MIN=-25,MAX=110,pos=t=>((t-MIN)/(MAX-MIN)*100);
+  const bands=[[-25,-18,"var(--ice)","Freezer"],[-18,4,"#5B8FC9","Cold"],[4,60,"var(--tomato)","DANGER ZONE 4–60°C"],[60,110,"#7A4A2A","Hot"]];
+  const tbar=el("div",{class:"tbar"});bands.forEach(([lo,hi,c,t])=>tbar.append(el("div",{style:"width:"+(pos(hi)-pos(lo))+"%;background:"+c,text:t})));
+  const pt=el("i");const tpos=el("div",{class:"tpos"},pt);
+  const rng=el("input",{type:"range",min:String(MIN),max:String(MAX),value:"22",id:"t-range","aria-label":"Temperature in °C"});
+  const vT=el("span",{class:"v"}),vF=el("span",{class:"v"}),vN=el("span",{class:"v"});
+  const zone=el("div",{class:"zone"}),dots=el("div",{class:"dots","aria-hidden":"true"});
+  a.append(tpos,tbar,el("div",{class:"gscale"},el("span",{text:"−25°C"}),el("span",{text:"0°C"}),el("span",{text:"37°C"}),el("span",{text:"100°C"})),rng,
+    el("div",{class:"readout"},el("div",{class:"big"},el("span",{class:"k",text:"Celsius"}),vT),el("div",{class:"big"},el("span",{class:"k",text:"Fahrenheit"}),vF),el("div",{class:"big"},el("span",{class:"k",text:"Bacteria after 4 h"}),vN)),zone,dots);
+  function upd(){const t=+rng.value;pt.style.left=pos(t)+"%";vT.textContent=t+"°C";vF.textContent=Math.round(t*9/5+32)+"°F";
+    let n,txt,bg,col;
+    if(t<=-18){n=10;txt="<b>Freezer.</b> Bacteria are paused. Still 10 after 4 hours, but they are not dead. Thaw the chicken and they wake up.";bg="var(--ice-soft)";}
+    else if(t<4){n=t<0?10:20;txt="<b>Fridge cold.</b> Bacteria multiply very slowly. That's why the fridge should be below 4°C.";bg="var(--ice-soft)";}
+    else if(t<=60){const best=1-Math.abs(t-37)/33;const doublings=Math.max(2,Math.round(12*best));n=10*Math.pow(2,doublings);txt="<b>Danger zone!</b> Bacteria multiply fast. Near body temperature (37°C) they can double every 20 minutes: that's 12 doublings in 4 hours.";bg="var(--tomato-soft)";}
+    else{n=0;txt="<b>Too hot for bacteria.</b> Above 60°C they can't multiply, and cooking until piping hot (75°C or more) kills them.";bg="var(--amber-soft)";}
+    vN.textContent=n.toLocaleString("en-GB");zone.style.background=bg;zone.innerHTML=txt;
+    dots.innerHTML="";const shown=Math.min(n,300);for(let k=0;k<shown;k++)dots.append(el("span"));if(n>300)dots.append(el("em",{style:"font-size:13px;color:var(--muted);margin-left:4px",text:"…and "+(n-300).toLocaleString("en-GB")+" more"}));
+  }
+  rng.addEventListener("input",upd);upd();
+
+  const b=shell(id,"Blanch the beans","Tap the steps in the right order to blanch green beans before freezing.");
+  const steps=["Wash the beans and trim the ends","Drop them into boiling water for 3 minutes","Plunge them straight into ice-cold water","Drain, pack into bags and freeze at −18°C"];
+  let next=0;const order=el("div",{class:"order"});const fb=el("p",{class:"fb"});
+  const shuffled=[2,0,3,1];
+  shuffled.forEach(k=>{const btn=el("button",{type:"button"},el("span",{class:"on",text:"?"}),steps[k]);
+    btn.addEventListener("click",()=>{if(btn.classList.contains("placed"))return;
+      if(k===next){btn.classList.add("placed");btn.querySelector(".on").textContent=String(next+1);next++;
+        if(next===4){fb.className="fb ok";fb.innerHTML="<b>Perfect! </b>The boiling switches off the enzymes. The ice water stops the beans cooking further, so they stay crisp and green.";}}
+      else{btn.classList.remove("shake");void btn.offsetWidth;btn.classList.add("shake");fb.className="fb no";fb.innerHTML="<b>Not yet. </b>Think: what has to happen first?";}});
+    order.append(btn);});
+  b.a.append(order,fb);
+})();
+
+/* Station 5: altitude */
+(function(){
+  const id="altitude";const{a}=shell(id,"Climb the mountain","Slide up the mountain, or pick a real place. Watch the boiling point change.");
+  const places=[["Dubai",16],["Jebel Jais (UAE)",6345],["Denver (USA)",5280],["Mexico City",7350],["La Paz (Bolivia)",11900]];
+  const rng=el("input",{type:"range",min:"0",max:"12000",step:"100",value:"0",id:"alt-range","aria-label":"Altitude in feet"});
+  const pre=el("div",{class:"presets"});
+  places.forEach(([n,ft])=>pre.append(el("button",{class:"opt",type:"button",text:n,onclick:()=>{rng.value=ft;upd(n);}})));
+  const mt=el("div",{class:"mountain"});
+  mt.innerHTML='<svg viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true"><path d="M0 90 L120 60 L200 8 L270 45 L330 30 L400 90 Z" fill="var(--brine-soft)" stroke="var(--brine)" stroke-width="2"/><circle id="climber" cx="0" cy="88" r="7" fill="var(--tomato)" stroke="var(--surface)" stroke-width="2"/></svg>';
+  const vFt=el("span",{class:"v"}),vM=el("span",{class:"v"}),vBF=el("span",{class:"v"}),vBC=el("span",{class:"v"});
+  const verdict=el("div",{class:"zone"});
+  a.append(pre,mt,el("label",{for:"alt-range",style:"font-weight:700",text:"Altitude"}),rng,
+   el("div",{class:"readout"},el("div",{class:"big"},el("span",{class:"k",text:"Feet"}),vFt),el("div",{class:"big"},el("span",{class:"k",text:"Metres"}),vM),el("div",{class:"big"},el("span",{class:"k",text:"Water boils at"}),vBF),el("div",{class:"big"},el("span",{class:"k",text:"In Celsius"}),vBC)),verdict);
+  function upd(place){const ft=+rng.value;const bf=212-ft/500,bc=(bf-32)*5/9;
+    vFt.textContent=ft.toLocaleString("en-GB")+" ft";vM.textContent=Math.round(ft*0.3048).toLocaleString("en-GB")+" m";vBF.textContent=bf.toFixed(1)+"°F";vBC.textContent=bc.toFixed(1)+"°C";
+    const p=ft/12000;const c=$("#climber",mt);
+    // climber follows left slope of the main peak: x 0→200, y 88→8
+    c.setAttribute("cx",String(200*p));c.setAttribute("cy",String(88-80*p));
+    const where=typeof place==="string"?place+": ":"";
+    if(ft<1000){verdict.style.background="var(--good-soft)";verdict.innerHTML="<b>"+where+"Below 1,000 ft.</b> Water boils at about 100°C. Follow the normal canning times.";}
+    else{verdict.style.background="var(--amber-soft)";verdict.innerHTML="<b>"+where+"1,000 ft or higher: adjust!</b> Water only reaches about "+bc.toFixed(1)+"°C, so jars in a water bath need <b>longer boiling</b>, and pressure canners need <b>more pressure</b>.";}
+  }
+  rng.addEventListener("input",()=>upd());upd();
+
+  const calc=el("div",{class:"calc"});
+  const q=[{t:"A town is 3,000 ft above sea level. How many °F lower is the boiling point?",ans:6,hint:"3,000 ÷ 500 = ?"},{t:"So what temperature does water boil at in that town (°F)?",ans:206,hint:"212 − your first answer"}];
+  calc.append(el("p",{style:"font-weight:700;font-size:18px",text:"Maths challenge"}));
+  q.forEach((qq,i)=>{const inp=el("input",{type:"number",inputmode:"numeric",id:"altq"+i,"aria-label":"Answer "+(i+1)});const fb=el("span",{class:"fb"});
+    const chk=el("button",{class:"btn",type:"button",text:"Check",onclick:()=>{const v=parseFloat(inp.value);if(isNaN(v)){fb.className="fb no";fb.textContent="Type a number first.";return;}
+      if(Math.abs(v-qq.ans)<0.01){fb.className="fb ok";fb.innerHTML="<b>Correct!</b>";}else{fb.className="fb no";fb.innerHTML="<b>Try again.</b> Hint: "+qq.hint;}}});
+    calc.append(el("label",{for:"altq"+i,text:(i+1)+". "+qq.t}),el("div",{class:"row"},inp,chk,fb));});
+  a.append(calc);
+})();
+
+/* Station 6: sanitise / sterilise */
+sortGame("clean","Sanitise or sterilise?","Is each job sanitising (making germs safe) or sterilising (killing everything)?",["Sanitise","Sterilise"],[
+ {q:"Washing your hands with soap for 20 seconds.",a:"Sanitise",why:"Soap removes most germs, but not every single one."},
+ {q:"Spraying and wiping the kitchen worktop.",a:"Sanitise",why:"Cleaning spray brings germs down to a safe level."},
+ {q:"Boiling empty jam jars before filling them.",a:"Sterilise",why:"Long boiling destroys the microbes in the jars."},
+ {q:"Heating jars of green beans in a pressure canner at 115°C.",a:"Sterilise",why:"This extreme heat even destroys botulinum spores."},
+ {q:"Washing a chopping board in hot soapy water.",a:"Sanitise",why:"It makes the board safe to use, but it isn't sterile."},
+ {q:"Heating sealed cans of soup in a giant factory pressure cooker.",a:"Sterilise",why:"This is how canned food can last for years."},
+ {q:"Wiping a spoon with an antibacterial wipe.",a:"Sanitise",why:"Wipes reduce germs. They don't destroy every spore."},
+ {q:"Hospital tools heated in a steam machine called an autoclave.",a:"Sterilise",why:"Surgeons need tools with no living microbes at all."}]);
+
+/* ---------- slides station ---------- */
+const THEMES=[{n:"Brine green",main:"0D7766",soft:"D5ECE5",ink:"15302A"},{n:"Tomato red",main:"B8361E",soft:"FBE3DD",ink:"3A1610"},{n:"Freezer blue",main:"2A66A8",soft:"DCE8F5",ink:"12263D"},{n:"Jam purple",main:"7A2A5C",soft:"F2DDEA",ink:"2E1023"}];
+const ss=el("section",{class:"station",id:"st-slides",role:"tabpanel","aria-labelledby":"tab-slides",hidden:""});
+ss.innerHTML='<div class="st-head"><div class="eyebrow">Final step</div><h2>Make my summary slides</h2><p class="lede">Your notes from every station turn into a PowerPoint. Check the preview, add your top tips, then download it.</p></div>';
+const formBlock=el("div",{class:"block"});
+const fName=el("input",{id:"pp-name",type:"text",placeholder:"Your name"}),fCls=el("input",{id:"pp-class",type:"text",placeholder:"e.g. 5B"});
+fName.value=S.name;fCls.value=S.cls;
+formBlock.append(el("h3",{text:"About me"}),el("div",{class:"form"},el("label",{for:"pp-name"},"Name",fName),el("label",{for:"pp-class"},"Class",fCls)));
+const tipsBlock=el("div",{class:"block"});tipsBlock.append(el("h3",{text:"My top 3 tips for keeping food safe"}),el("p",{class:"sub",text:"These make your final slide. Use what you learned at the stations."}));
+const tipsWrap=el("div",{class:"tips"});
+[0,1,2].forEach(i=>{const inp=el("input",{id:"tip"+i,type:"text",placeholder:["e.g. Keep the fridge below 4°C","e.g. Never eat from a bulging can","e.g. Blanch vegetables before freezing them"][i]});inp.value=S.tips[i]||"";inp.addEventListener("input",()=>{S.tips[i]=inp.value;save();renderSlides();});tipsWrap.append(el("label",{for:"tip"+i},"Tip "+(i+1),inp));});
+tipsBlock.append(tipsWrap);
+const themeBlock=el("div",{class:"block"});const themes=el("div",{class:"themes"});
+THEMES.forEach((t,i)=>themes.append(el("button",{class:"sw",type:"button","aria-pressed":String(S.theme===i),onclick:()=>{S.theme=i;save();themes.querySelectorAll(".sw").forEach((b,j)=>b.setAttribute("aria-pressed",j===i));renderSlides();}},el("i",{style:"background:#"+t.main}),t.n)));
+const bigChk=el("input",{type:"checkbox",id:"pp-big"});bigChk.checked=S.bigidea;bigChk.addEventListener("change",()=>{S.bigidea=bigChk.checked;save();renderSlides();});
+themeBlock.append(el("h3",{text:"Slide style"}),themes,el("label",{class:"check",for:"pp-big"},bigChk,"Add a 'Big idea' box to each slide"));
+const prevBlock=el("div",{class:"block"});const grid=el("div",{class:"slidesgrid"});const missing=el("p",{class:"missing"});
+prevBlock.append(el("h3",{text:"Preview"}),missing,grid);
+const exBlock=el("div",{class:"activity"});const dlBtn=el("button",{class:"btn",type:"button",text:"Download my PowerPoint"});const msg=el("p",{class:"msg"});
+exBlock.append(el("div",{class:"ah"},el("h3",{text:"Download"})),el("div",{class:"export"},dlBtn),msg);
+ss.append(formBlock,tipsBlock,themeBlock,prevBlock,exBlock);main.append(ss);
+
+const nameTop=$("#sname");nameTop.value=S.name;
+function setName(v,from){S.name=v;save();if(from!==nameTop)nameTop.value=v;if(from!==fName)fName.value=v;renderSlides();}
+nameTop.addEventListener("input",()=>setName(nameTop.value,nameTop));
+fName.addEventListener("input",()=>setName(fName.value,fName));
+fCls.addEventListener("input",()=>{S.cls=fCls.value;save();renderSlides();});
+
+function renderSlides(){
+  if(ss.hidden&&!grid.childElementCount&&false)return;
+  const t=THEMES[S.theme]||THEMES[0];grid.innerHTML="";
+  const ts=el("div",{class:"slide title",style:"background:#"+t.main},el("div",{class:"t1",text:"Food Preservation"}),el("div",{text:"My summary notes"}),el("div",{text:(S.name||"Your name")+(S.cls?" · "+S.cls:"")}));grid.append(ts);
+  const miss=[];
+  STATIONS.forEach((s,i)=>{const notes=(S.notes[s.id]||"").trim();if(!notes)miss.push(s.short);
+    const sl=el("div",{class:"slide"+(notes?"":" empty")},
+      el("div",{class:"lp",style:"background:#"+t.main},el("span",{class:"sn",text:"Station "+(i+1)}),el("span",{class:"stt",text:s.short})),
+      el("div",{class:"rp"},el("span",{class:"nh",style:"color:#"+t.ink,text:"My notes"}),el("div",{class:"nt",text:notes||"No notes yet"}),S.bigidea?el("div",{class:"bi",style:"background:#"+t.soft+";color:#"+t.ink,text:"Big idea: "+s.bigidea}):null));
+    grid.append(sl);});
+  const tips=S.tips.map(x=>(x||"").trim()).filter(Boolean);
+  grid.append(el("div",{class:"slide"},el("div",{class:"lp",style:"background:#"+t.main},el("span",{class:"sn",text:"Final slide"}),el("span",{class:"stt",text:"My top tips"})),el("div",{class:"rp"},el("span",{class:"nh",style:"color:#"+t.ink,text:"Keeping food safe"}),el("div",{class:"nt",text:tips.length?tips.map((x,i)=>(i+1)+". "+x).join("\n"):"Add your tips above"}),null)));
+  missing.innerHTML="";
+  if(miss.length)missing.append(el("span",{style:"color:var(--tomato);font-weight:700",text:"Still to write: "}),document.createTextNode(miss.join(", ")+". You can still download, but those slides will say 'No notes yet'."));
+  else missing.append(el("span",{style:"color:var(--good);font-weight:700",text:"All six stations have notes. "}),document.createTextNode("Ready to download!"));
+}
+
+/* ---------- PowerPoint ---------- */
+const dlCap=(window.claude&&typeof window.claude.use==="function")?window.claude.use("downloads").catch(()=>null):Promise.resolve(null);
+
+function notesRuns(text,ink){
+  const lines=text.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length)return[{text:"No notes yet",options:{italic:true,color:"999999"}}];
+  return lines.map(l=>({text:l,options:{bullet:lines.length>1?{indent:18}:false,breakLine:true,paraSpaceAfter:6}}));
+}
+function sizeFor(len){return len<250?22:len<500?18:len<850?15:len<1300?13:11;}
+
+async function buildPptx(){
+  const t=THEMES[S.theme]||THEMES[0];
+  const p=new PptxGenJS();p.layout="LAYOUT_WIDE";p.author=S.name||"Student";p.title="Food Preservation: my summary";
+  const F="Arial";
+  // title
+  let s=p.addSlide();s.background={color:t.main};
+  s.addText("FOOD PRESERVATION",{x:0.8,y:1.6,w:11.7,h:0.5,fontFace:F,fontSize:16,bold:true,color:"FFFFFF",charSpacing:4});
+  s.addText("How we keep food safe to eat",{x:0.8,y:2.1,w:11.7,h:1.4,fontFace:F,fontSize:44,bold:true,color:"FFFFFF"});
+  s.addText("My summary notes",{x:0.8,y:3.5,w:11.7,h:0.6,fontFace:F,fontSize:22,color:"FFFFFF"});
+  s.addShape(p.ShapeType.rect,{x:0.8,y:4.5,w:3,h:0.08,fill:{color:"FFFFFF"},line:{color:"FFFFFF"}});
+  s.addText([{text:(S.name||"Name"),options:{bold:true,breakLine:true}},{text:(S.cls?"Class "+S.cls+" · ":"")+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}],{x:0.8,y:4.8,w:11,h:1,fontFace:F,fontSize:18,color:"FFFFFF"});
+  // stations
+  STATIONS.forEach((st,i)=>{
+    const sl=p.addSlide();sl.background={color:"FFFFFF"};
+    sl.addShape(p.ShapeType.rect,{x:0,y:0,w:3.9,h:7.5,fill:{color:t.main},line:{color:t.main}});
+    sl.addText("STATION "+(i+1),{x:0.4,y:0.5,w:3.2,h:0.4,fontFace:F,fontSize:13,bold:true,color:"FFFFFF",charSpacing:3});
+    sl.addText(st.title,{x:0.4,y:0.95,w:3.2,h:2.2,fontFace:F,fontSize:26,bold:true,color:"FFFFFF",valign:"top"});
+    sl.addText("Key words",{x:0.4,y:3.6,w:3.2,h:0.35,fontFace:F,fontSize:12,bold:true,color:"FFFFFF"});
+    sl.addText(st.words.slice(0,5).map(w=>({text:w[0],options:{bullet:true,breakLine:true}})),{x:0.4,y:3.95,w:3.2,h:3,fontFace:F,fontSize:14,color:"FFFFFF",valign:"top"});
+    const notes=(S.notes[st.id]||"").trim();
+    sl.addText("My notes",{x:4.4,y:0.45,w:8.4,h:0.55,fontFace:F,fontSize:24,bold:true,color:t.ink});
+    const bodyH=S.bigidea?4.15:5.9;
+    sl.addText(notesRuns(notes,t.ink),{x:4.4,y:1.1,w:8.5,h:bodyH,fontFace:F,fontSize:sizeFor(notes.length),color:"222222",valign:"top",fit:"shrink"});
+    if(S.bigidea){
+      sl.addShape(p.ShapeType.roundRect,{x:4.4,y:5.45,w:8.5,h:1.6,fill:{color:t.soft},line:{color:t.soft},rectRadius:0.12});
+      sl.addText([{text:"Big idea: ",options:{bold:true}},{text:st.bigidea}],{x:4.6,y:5.5,w:8.1,h:1.5,fontFace:F,fontSize:14,color:t.ink,valign:"middle"});
+    }
+  });
+  // tips
+  const tips=S.tips.map(x=>(x||"").trim()).filter(Boolean);
+  const tl=p.addSlide();tl.background={color:t.soft};
+  tl.addText("My top tips for keeping food safe",{x:0.8,y:0.6,w:11.7,h:1,fontFace:F,fontSize:34,bold:true,color:t.ink});
+  if(tips.length){tips.forEach((tip,i)=>{const y=1.9+i*1.6;
+    tl.addShape(p.ShapeType.ellipse,{x:0.8,y:y,w:0.9,h:0.9,fill:{color:t.main},line:{color:t.main}});
+    tl.addText(String(i+1),{x:0.8,y:y,w:0.9,h:0.9,fontFace:F,fontSize:28,bold:true,color:"FFFFFF",align:"center",valign:"middle"});
+    tl.addText(tip,{x:2,y:y-0.1,w:10.5,h:1.1,fontFace:F,fontSize:24,color:"222222",valign:"middle"});});}
+  else tl.addText("(Add your top tips)",{x:0.8,y:2,w:11,h:1,fontFace:F,fontSize:22,italic:true,color:"777777"});
+  return p;
+}
+
+dlBtn.addEventListener("click",async()=>{
+  if(typeof PptxGenJS==="undefined"){msg.textContent="The slide maker didn't load. Check the internet connection and refresh the page.";return;}
+  dlBtn.disabled=true;msg.textContent="Building your slides…";
+  const fname="Food-Preservation-"+((S.name||"my").trim().replace(/[^A-Za-z0-9]+/g,"-")||"my")+"-summary.pptx";
+  try{
+    const p=await buildPptx();
+    const dl=await dlCap;
+    if(dl){
+      const blob=await p.write({outputType:"blob"});
+      try{await dl.save({filename:fname,data:blob});msg.textContent="Saved! Open "+fname+" in PowerPoint, Keynote or Google Slides.";}
+      catch(e){msg.textContent=e&&e.code==="declined"?"Download cancelled. Press the button again when you're ready.":"The download didn't work here. Try again in a moment.";}
+    }else{
+      await p.writeFile({fileName:fname});
+      msg.textContent="Your file "+fname+" should be in your Downloads folder.";
+    }
+  }catch(e){msg.textContent="Something went wrong making the slides. Please try again.";}
+  finally{dlBtn.disabled=false;}
+});
+
+/* ---------- start ---------- */
+refreshProgress();
+const start=(location.hash||"").slice(1);
+show(ALL.some(t=>t.id===start)?start:"enemies",false);
+</script>
+
+</body>
+</html>
